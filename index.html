@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Krampuslauf – Schloss Marzoll</title>
+<!-- Schriften: Fraktur wie im Schlosslauf-Trailer, dazu eine schmale Grotesk fürs HUD.
+     Ohne Internet greifen die System-Schriften aus der font-family-Liste. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --russ: #0c090a;        /* Fellschwarz */
+    --bengalo: #e3173b;     /* Bengalo-Rot aus den Trailer-Bildern */
+    --glut: #ff7b2e;        /* Fackelglut */
+    --messing: #c9a14b;     /* Glockenmessing */
+    --larve: #e6dbc2;       /* Knochenfarbe der Larve */
+    --schnee: #c3cfdd;      /* Schnee in der Dämmerung */
+    --fraktur: "Pirata One", "Old English Text MT", "UnifrakturCook", Georgia, serif;
+    --grotesk: "Barlow Condensed", "Bahnschrift", "DIN Alternate", "Arial Narrow", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: clamp(12px, 2.05vh, 18px); }                 /* alles skaliert mit der Fensterhöhe */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--russ); color: var(--larve);
+    font-family: var(--grotesk); -webkit-font-smoothing: antialiased; user-select: none; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; }
+  body[data-state="playing"] #hud, body[data-state="paused"] #hud { opacity: 1; }
+  #hud .big { display: block; font-family: var(--fraktur); font-size: 2.5rem; line-height: 1; color: var(--larve);
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0,0,0,.8); }
+  #hud .small { display: block; font-size: 1.05rem; font-weight: 600; letter-spacing: .02em; color: var(--schnee);
+    text-shadow: 0 1px 0 #000, 0 0 10px rgba(0,0,0,.9); }
+  #hud-wave { position: absolute; left: 2rem; top: 1.5rem; }
+  #hud-score { position: absolute; right: 2rem; top: 1.5rem; text-align: right; }
+  #hScore { font-family: var(--grotesk); font-weight: 700; font-size: 2.7rem; }
+  #hud-score .big.bump { animation: bump .28s ease-out; }
+  @keyframes bump { 0% { transform: scale(1.25); color: var(--messing); } 100% { transform: scale(1); } }
+
+  #hud-health { position: absolute; left: 2rem; bottom: 1.8rem; width: min(21rem, 38vw); }
+  #hud-health .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .3rem;
+    font-weight: 600; font-size: 1.05rem; color: var(--schnee); text-shadow: 0 1px 0 #000, 0 0 10px #000; }
+  #hud-health #hHp { font-size: 2rem; font-weight: 700; line-height: .9; color: var(--larve); }
+  #hud-health .bar { height: .7rem; background: rgba(12,9,10,.72); border: 1px solid rgba(201,161,75,.55);
+    transform: skewX(-14deg); overflow: hidden; }
+  #hHpFill { height: 100%; width: 100%; transform-origin: left center;
+    background: linear-gradient(90deg, #8f0f24, var(--bengalo) 55%, var(--glut)); transition: transform .12s linear; }
+  #hud-health.low .bar { animation: lowpulse .7s infinite alternate; }
+  @keyframes lowpulse { from { box-shadow: 0 0 0 rgba(227,23,59,0); } to { box-shadow: 0 0 18px rgba(227,23,59,.9); } }
+
+  #hud-rute { position: absolute; right: 2rem; bottom: 1.6rem; display: flex; align-items: center; gap: .8rem; text-align: right; }
+  #hud-rute svg { width: 4.4rem; height: 4.4rem; order: 2; }
+  #hud-rute .track { fill: rgba(12,9,10,.6); stroke: rgba(195,207,221,.25); stroke-width: 4; }
+  #hud-rute .prog { fill: none; stroke: var(--messing); stroke-width: 4; stroke-linecap: butt;
+    stroke-dasharray: 169.65; stroke-dashoffset: 0; transform: rotate(-90deg); transform-origin: 32px 32px; }
+  #hud-rute .icon { stroke: var(--larve); stroke-width: 2; stroke-linecap: round; fill: none; }
+  #hud-rute.away .icon { opacity: .28; }
+  #hud-rute.away .prog { stroke: var(--bengalo); }
+  #hud-ram { position: absolute; right: 2rem; bottom: 7.2rem; display: flex; align-items: center; gap: .8rem; text-align: right; }
+  #hud-ram svg { width: 3.6rem; height: 3.6rem; order: 2; }
+  #hud-ram .track { fill: rgba(12,9,10,.6); stroke: rgba(195,207,221,.25); stroke-width: 4; }
+  #hud-ram .prog { fill: none; stroke: var(--glut); stroke-width: 4; stroke-dasharray: 169.65; stroke-dashoffset: 169.65; transform: rotate(-90deg); transform-origin: 32px 32px; }
+  #hud-ram .icon { stroke: var(--larve); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: .35; }
+  #hud-ram.ready .icon { opacity: 1; } #hud-ram.ready .prog { stroke: var(--messing); }
+  #hud-ram.cool .prog { stroke: var(--bengalo); } #hud-ram.active .icon { opacity: 1; stroke: var(--glut); }
+  #hRam { display: block; font-weight: 700; font-size: 1.3rem; line-height: 1; color: var(--larve); text-shadow: 0 2px 0 #000, 0 0 14px #000; }
+  #hud-ram kbd { min-width: 1.2rem; padding: 0 .3rem; font-size: .8rem; }
+  #bossbar { position: absolute; left: 50%; top: 4.6rem; width: min(34rem, 60vw); transform: translateX(-50%); display: none; text-align: center; }
+  #bossbar.show { display: block; }
+  #bossbar .name { font-family: var(--fraktur); font-size: 1.9rem; line-height: 1; color: var(--larve); text-shadow: 0 2px 0 #000, 0 0 18px rgba(227,23,59,.8); }
+  #bossbar .bar { margin-top: .3rem; height: .8rem; background: rgba(12,9,10,.75); border: 1px solid rgba(201,161,75,.7); transform: skewX(-14deg); overflow: hidden; }
+  #hBossFill { height: 100%; width: 100%; transform-origin: left center; background: linear-gradient(90deg, #5a0712, var(--bengalo) 60%, var(--glut)); transition: transform .15s linear; }
+  #bossbar.p2 .name { color: var(--glut); } #bossbar.p3 .name { color: var(--bengalo); }
+  .tbtn[data-btn="ram"] { background: conic-gradient(rgba(255,123,46,.55) calc(var(--fill, 0) * 1%), rgba(12,9,10,.55) 0); }
+  .tbtn[data-btn="ram"].ready { border-color: var(--glut); box-shadow: 0 0 16px rgba(255,123,46,.7); }
+  #hRute { display: block; font-weight: 700; font-size: 1.55rem; line-height: 1; color: var(--larve);
+    text-shadow: 0 2px 0 #000, 0 0 14px #000; }
+
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #crosshair i { position: absolute; background: var(--larve); box-shadow: 0 0 0 1px rgba(0,0,0,.55); transition: transform .12s, background .12s; }
+  #crosshair .t, #crosshair .b { width: 2px; height: 9px; left: -1px; }
+  #crosshair .l, #crosshair .r { height: 2px; width: 9px; top: -1px; }
+  #crosshair .t { top: -17px; } #crosshair .b { top: 8px; } #crosshair .l { left: -17px; } #crosshair .r { left: 8px; }
+  #crosshair em { position: absolute; left: -1.5px; top: -1.5px; width: 3px; height: 3px; background: var(--larve); border-radius: 50%; }
+  #crosshair.target i, #crosshair.target em { background: var(--glut); }
+  #crosshair.reach .t { transform: translateY(4px); } #crosshair.reach .b { transform: translateY(-4px); }
+  #crosshair.reach .l { transform: translateX(4px); } #crosshair.reach .r { transform: translateX(-4px); }
+  #crosshair.reach i, #crosshair.reach em { background: var(--bengalo); }
+  #hitmarker { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; opacity: 0; }
+  #hitmarker::before, #hitmarker::after { content: ""; position: absolute; left: 14px; top: -3px; width: 2px; height: 36px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+  #hitmarker::before { transform: rotate(45deg); } #hitmarker::after { transform: rotate(-45deg); }
+  #hitmarker.hit { animation: hm .22s ease-out; }
+  #hitmarker.kill { animation: hmk .38s ease-out; }
+  #hitmarker.kill::before, #hitmarker.kill::after { background: var(--bengalo); }
+  @keyframes hm { 0% { opacity: 1; transform: scale(.6); } 100% { opacity: 0; transform: scale(1); } }
+  @keyframes hmk { 0% { opacity: 1; transform: scale(.7); } 60% { opacity: 1; transform: scale(1.35); } 100% { opacity: 0; transform: scale(1.5); } }
+
+  #threats { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #threats i { position: absolute; left: -6px; top: -5px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-bottom: 10px solid var(--bengalo); filter: drop-shadow(0 0 3px #000); opacity: 0; }
+  #threats i.dmg { border-bottom-color: #fff; border-left-width: 16px; border-right-width: 16px; left: -16px; }
+
+  #vignette { position: absolute; inset: 0; opacity: 0;
+    background: radial-gradient(ellipse at center, rgba(227,23,59,0) 42%, rgba(160,8,30,.75) 100%); }
+
+  #banner { position: absolute; left: 0; right: 0; top: 17%; text-align: center; opacity: 0; transition: opacity .35s; }
+  #banner.show { opacity: 1; }
+  #bannerTitle { font-family: var(--fraktur); font-size: clamp(3rem, 8vw, 6rem); line-height: 1; color: var(--larve);
+    text-shadow: 0 3px 0 #000, 0 0 40px rgba(227,23,59,.75); }
+  #bannerSub { margin-top: .4rem; font-size: 1.4rem; font-weight: 600; color: var(--schnee); text-shadow: 0 1px 0 #000, 0 0 12px #000; }
+
+  #toast { position: absolute; left: 50%; bottom: 6.5rem; transform: translateX(-50%); padding: .35rem .9rem; font-weight: 600;
+    background: rgba(12,9,10,.78); border-left: 3px solid var(--messing); opacity: 0; transition: opacity .3s; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+
+  /* ---------- Bildschirme ---------- */
+  .screen { position: fixed; inset: 0; display: none; align-items: center; padding: 3vh 6vw; overflow-y: auto;
+    background: linear-gradient(90deg, rgba(12,9,10,.93) 0%, rgba(12,9,10,.78) 34%, rgba(12,9,10,0) 72%); }
+  body[data-state="loading"] #menu, body[data-state="menu"] #menu,
+  body[data-state="paused"] #pause, body[data-state="gameover"] #over { display: flex; }
+  .screen .col { max-width: 31rem; }
+  .screen h1 { margin: 0; font-family: var(--fraktur); font-weight: 400; font-size: clamp(4rem, 10.5vw, 9rem); line-height: .86;
+    color: var(--larve); text-shadow: 0 0 60px rgba(227,23,59,.85), 0 0 12px rgba(227,23,59,.5), 0 4px 0 #000; }
+  .screen h2 { margin: .5rem 0 0; font-family: var(--fraktur); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 3rem); line-height: 1; color: var(--messing); }
+  .screen p { margin: 1.3rem 0 0; font-size: 1.3rem; line-height: 1.3; font-weight: 500; color: var(--schnee); max-width: 26rem; }
+  .keys { margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: auto 1fr; gap: .42rem 1rem; align-items: center; font-size: 1.15rem; }
+  .keys dt { margin: 0; white-space: nowrap; }
+  .keys dd { margin: 0; color: var(--schnee); font-weight: 500; }
+  kbd { display: inline-block; min-width: 1.75rem; padding: .05rem .45rem; margin-right: .15rem; text-align: center; font: 600 1rem var(--grotesk);
+    color: var(--russ); background: var(--messing); border-radius: 3px; box-shadow: 0 2px 0 #6d5320; }
+  .screen button { margin-top: 1.8rem; padding: .55rem 1.7rem .65rem; font: 400 2.1rem/1 var(--fraktur); color: #fff; cursor: pointer;
+    background: var(--bengalo); border: 0; border-radius: 2px; box-shadow: 0 0 34px rgba(227,23,59,.6), 0 4px 0 #7a0a1e; }
+  .screen button:hover { background: #f52a4d; }
+  .screen button:active { transform: translateY(2px); box-shadow: 0 0 34px rgba(227,23,59,.6), 0 2px 0 #7a0a1e; }
+  .screen button:focus-visible { outline: 3px solid var(--larve); outline-offset: 4px; }
+  .screen button[disabled] { background: #4b3a3d; box-shadow: none; cursor: default; }
+  .screen .note { margin-top: 1rem; font-size: 1.05rem; color: var(--schnee); opacity: .85; }
+  .stats { margin: 1.4rem 0 0; display: grid; grid-template-columns: auto auto; gap: .1rem 2.2rem; justify-content: start; align-items: baseline; }
+  .stats dt { font-size: 1.15rem; font-weight: 600; color: var(--schnee); }
+  .stats dd { margin: 0; font-weight: 700; font-size: 2.3rem; line-height: 1.05; color: var(--larve); }
+  #over h1, #pause h1 { font-size: clamp(3rem, 7vw, 5.6rem); line-height: .92; }
+  #newBest { color: var(--glut); display: none; }
+  #loadError { display: none; margin-top: 1rem; color: var(--glut); font-size: 1.1rem; max-width: 26rem; }
+  /* Krampus-Galerie (Taste G im Menü) */
+  #gallery { position: fixed; left: 0; right: 0; bottom: 4vh; display: none; text-align: center; pointer-events: none; }
+  body[data-state="menu"][data-gallery="1"] #gallery { display: block; }
+  body[data-state="menu"][data-gallery="1"] #menu { display: none; }
+  #gallery .names { display: flex; justify-content: center; gap: 0; }
+  #gallery .names span { width: 22vw; max-width: 19rem; font-family: var(--fraktur); font-size: 2rem; line-height: 1; color: var(--larve); text-shadow: 0 2px 0 #000, 0 0 16px #000; }
+  #gallery .names small { display: block; margin-top: .25rem; font: 600 1.1rem var(--grotesk); color: var(--messing); }
+  #gallery .note { margin-top: 1rem; font-size: 1.05rem; font-weight: 600; color: var(--schnee); text-shadow: 0 1px 0 #000, 0 0 10px #000; }
+
+  /* ---------- Grafikstufe (Menü und Pause) ---------- */
+  .quality { margin-top: 1.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: 1.05rem; font-weight: 600; color: var(--schnee); }
+  .quality span { margin-right: .3rem; }
+  .screen .quality button { margin: 0; padding: .3rem .75rem .35rem; font: 600 1.05rem/1 var(--grotesk); color: var(--larve);
+    background: rgba(12,9,10,.7); border: 1px solid rgba(201,161,75,.5); box-shadow: none; }
+  .screen .quality button[aria-pressed="true"] { background: var(--messing); color: var(--russ); border-color: var(--messing); }
+  .quality small { flex-basis: 100%; font-weight: 500; opacity: .8; }
+
+  /* ---------- Touch-Steuerung (nur im Handy-Modus sichtbar) ---------- */
+  .touch-only { display: none; }
+  body[data-touch="1"] .touch-only { display: block; }
+  body[data-touch="1"] dl.touch-only { display: grid; }
+  body[data-touch="1"] button.touch-only { display: inline-block; }
+  body[data-touch="1"] .desk-only { display: none !important; }
+  #touch { position: fixed; inset: 0; display: none; touch-action: none; -webkit-touch-callout: none; }
+  body[data-touch="1"][data-state="playing"] #touch { display: block; }
+  #stickBase, #stickKnob { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .15s; }
+  #stickBase { width: var(--stick-d); height: var(--stick-d); margin: calc(var(--stick-d) / -2) 0 0 calc(var(--stick-d) / -2);
+    border: 2px solid rgba(230,219,194,.45); background: rgba(12,9,10,.35); }
+  #stickKnob { width: calc(var(--stick-d) * .42); height: calc(var(--stick-d) * .42); margin: calc(var(--stick-d) * -.21) 0 0 calc(var(--stick-d) * -.21);
+    background: rgba(230,219,194,.75); box-shadow: 0 0 12px rgba(0,0,0,.6); }
+  #touch.stick #stickBase, #touch.stick #stickKnob { opacity: 1; }
+  #touch.stick.sprint #stickKnob { background: var(--glut); }
+  #stickHint { position: absolute; left: calc(env(safe-area-inset-left) + 2.2rem); bottom: 6.2rem; width: 5.6rem; height: 5.6rem; border-radius: 50%;
+    border: 2px dashed rgba(230,219,194,.28); pointer-events: none; transition: opacity .2s; }
+  #touch.stick #stickHint { opacity: 0; }
+  .tbtn { position: absolute; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-align: center;
+    font: 700 .95rem/1 var(--grotesk); color: var(--larve); background: rgba(12,9,10,.55); border: 2px solid rgba(230,219,194,.5);
+    text-shadow: 0 1px 0 #000; user-select: none; -webkit-user-select: none; }
+  .tbtn.down { background: rgba(227,23,59,.7); border-color: var(--bengalo); }
+  .tbtn.big { border-color: var(--bengalo); }
+  .tbtn.small { border-radius: 8px; font-size: .85rem; }
+  .tbtn.reserved { opacity: .22; border-style: dashed; pointer-events: none; }
+  .tbtn.cool { opacity: .45; }
+
+  /* Hinweis zum Drehen */
+  #rotate { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem;
+    background: var(--russ); text-align: center; z-index: 50; font-size: 1.4rem; font-weight: 600; color: var(--schnee); }
+  #rotate b { font-family: var(--fraktur); font-weight: 400; font-size: 2.6rem; color: var(--larve); }
+  #rotate .phone { width: 3.2rem; height: 5.4rem; border: 3px solid var(--larve); border-radius: .6rem; animation: drehen 2.2s ease-in-out infinite; }
+  @keyframes drehen { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
+  @media (orientation: portrait) { body[data-touch="1"] #rotate { display: flex; } }
+
+  /* HUD im Handy-Modus: unten links/rechts liegen Stick und Knöpfe, darum Leben und Rute nach oben */
+  body[data-touch="1"] #hud-wave { left: calc(env(safe-area-inset-left) + 1rem); top: .8rem; }
+  body[data-touch="1"] #hud-score { right: calc(env(safe-area-inset-right) + 1rem); top: .8rem; }
+  body[data-touch="1"] #hud-health { left: 50%; top: .9rem; bottom: auto; width: min(16rem, 30vw); transform: translateX(-50%); }
+  body[data-touch="1"] #hud-rute { right: calc(env(safe-area-inset-right) + 7.5rem); top: .8rem; bottom: auto; gap: .4rem; }
+  body[data-touch="1"] #hud-rute svg { width: 2.8rem; height: 2.8rem; }
+  body[data-touch="1"] #hud-rute .small { display: none; }
+  body[data-touch="1"] #hRute { font-size: 1.1rem; }
+  body[data-touch="1"] #hud .big { font-size: 1.9rem; }
+  body[data-touch="1"] #hScore { font-size: 2rem; }
+  body[data-touch="1"] #toast { bottom: auto; top: 6.6rem; }
+  body[data-touch="1"] #hud-ram { display: none; }
+  body[data-touch="1"] #bossbar { top: 3.6rem; width: min(24rem, 46vw); }
+  body[data-touch="1"] #bossbar .name { font-size: 1.3rem; }
+  body[data-touch="1"] .screen { padding: 2vh calc(env(safe-area-inset-right) + 4vw) 2vh calc(env(safe-area-inset-left) + 5vw); }
+  body[data-touch="1"] .screen { align-items: flex-start; }
+  body[data-touch="1"] .screen .col { margin: auto 0; }                 /* zentriert, aber oben nie abgeschnitten */
+  body[data-touch="1"] .screen h1 { font-size: min(8vw, 15vh); }
+  body[data-touch="1"] .screen h2 { font-size: min(3.6vw, 7vh); }
+  body[data-touch="1"] .keys { margin-top: .8rem; gap: .3rem .8rem; font-size: 1rem; }
+  body[data-touch="1"] .quality { margin-top: .8rem; }
+  body[data-touch="1"] .screen p { margin-top: .7rem; }
+  body[data-touch="1"] .screen button { margin-top: 1rem; }
+  .screen .fsBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
+</style>
+  <script type="module" crossorigin src="./assets/index-CT9nXfbO.js"></script>
+</head>
+<body data-state="loading">
+<canvas id="game"></canvas>
+
+<div id="hud" aria-hidden="true">
+  <div id="vignette"></div>
+  <div id="threats"></div>
+  <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><em></em><b id="hitmarker"></b></div>
+  <div id="hud-wave"><span class="big" id="hWave">Welle 1</span><span class="small" id="hLeft"></span></div>
+  <div id="hud-score"><span class="big" id="hScore">0</span><span class="small" id="hKills">0 Kills</span></div>
+  <div id="hud-health"><div class="row"><span>Leben</span><span id="hHp">100</span></div><div class="bar"><div id="hHpFill"></div></div></div>
+  <div id="hud-rute">
+    <svg viewBox="0 0 64 64">
+      <circle class="track" cx="32" cy="32" r="27"/>
+      <circle class="prog" id="hRuteRing" cx="32" cy="32" r="27"/>
+      <g class="icon"><path d="M22 46 L31 34"/><path d="M31 34 L33 16"/><path d="M31 34 L38 18"/><path d="M31 34 L43 22"/><path d="M31 34 L46 28"/><path d="M27 39 L30 41" stroke-width="4"/></g>
+    </svg>
+    <div><span class="small">Rutenwurf</span><span id="hRute">bereit</span></div>
+  </div>
+  <div id="hud-ram">
+    <svg viewBox="0 0 64 64">
+      <circle class="track" cx="32" cy="32" r="27"/>
+      <circle class="prog" id="hRamRing" cx="32" cy="32" r="27"/>
+      <g class="icon"><path d="M18 40 L30 30 L46 30"/><path d="M40 24 L47 30 L40 36"/><path d="M14 30 L22 30"/><path d="M12 36 L20 36"/></g>
+    </svg>
+    <div><span class="small">Rammsprint <kbd class="desk-only">F</kbd></span><span id="hRam">0 %</span></div>
+  </div>
+  <div id="bossbar"><div class="name">Oberteufel</div><div class="bar"><div id="hBossFill"></div></div></div>
+  <div id="banner"><div id="bannerTitle"></div><div id="bannerSub"></div></div>
+  <div id="toast"></div>
+</div>
+
+<section id="menu" class="screen">
+  <div class="col">
+    <h1>Krampuslauf</h1>
+    <h2>Schloss Marzoll</h2>
+    <p>Es dämmert über dem Schlossberg. Fremde Passen stürmen den Hof, und du hast nur deine Rute.</p>
+    <dl class="keys touch-only" id="touchKeys">
+      <dt><kbd>Stick</kbd></dt><dd>linker Daumen: laufen, ganz nach vorn = sprinten</dd>
+      <dt><kbd>Wischen</kbd></dt><dd>rechte Bildhälfte: umsehen</dd>
+      <dt><kbd>Schlag</kbd> <kbd>Wurf</kbd></dt><dd>zuschlagen, Rute werfen (kommt von selbst zurück)</dd>
+      <dt><kbd>Ramm</kbd></dt><dd>Rammsprint, wenn der Knopf voll ist (Sprinten lädt ihn)</dd>
+      <dt><kbd>Sprung</kbd> <kbd>Kam</kbd> <kbd>II</kbd></dt><dd>springen, Kamera wechseln, Pause</dd>
+    </dl>
+    <dl class="keys desk-only">
+      <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>laufen, mit der Maus umsehen</dd>
+      <dt><kbd>Shift</kbd></dt><dd>sprinten, lädt den Rammsprint</dd>
+      <dt><kbd>F</kbd></dt><dd>Rammsprint, wenn die Leiste voll ist</dd>
+      <dt><kbd>Leertaste</kbd></dt><dd>springen</dd>
+      <dt><kbd>Linksklick</kbd></dt><dd>mit der Rute zuschlagen</dd>
+      <dt><kbd>Rechtsklick</kbd> <kbd>Enter</kbd></dt><dd>Rute werfen, sie kommt von selbst zurück</dd>
+      <dt><kbd>V</kbd></dt><dd>zwischen Ego- und Schulterkamera wechseln</dd>
+      <dt><kbd>M</kbd></dt><dd>Ton an oder aus</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
+    </dl>
+    <button id="btnStart" disabled>Schloss wird aufgebaut</button><button class="fsBtn touch-only">Vollbild</button>
+    <div class="quality" data-quality></div>
+    <div class="note desk-only">Mit <kbd>G</kbd> siehst du die vier Krampusse aus der Nähe.</div>
+    <div class="note touch-only"><a href="#" id="galleryLink" style="color:inherit">Die vier Krampusse aus der Nähe ansehen</a></div>
+    <div class="note" id="menuBest"></div>
+    <div id="loadError">Das Spiel konnte nicht starten. Bitte die Seite neu laden; hilft das nicht, einen aktuellen Browser verwenden.</div>
+  </div>
+</section>
+
+<div id="gallery">
+  <div class="names">
+    <span>Schlossteufel<small>du selbst</small></span>
+    <span>Rotlarve<small>Läufer</small></span>
+    <span>Grauer<small>Rammer</small></span>
+    <span>Bockshorn<small>Springer</small></span>
+  </div>
+  <div class="note desk-only"><kbd>1</kbd>–<kbd>4</kbd> zeigt einen Krampus aus der Nähe, <kbd>5</kbd> die Rute, <kbd>0</kbd> alle. <kbd>G</kbd> oder <kbd>Esc</kbd> schließt die Galerie</div>
+  <div class="note touch-only">Tippen zeigt den nächsten Krampus aus der Nähe, nach dem letzten schließt die Galerie</div>
+</div>
+
+<section id="pause" class="screen">
+  <div class="col">
+    <h1>Pause</h1>
+    <p>Die Horde wartet. Dein Stand bleibt erhalten.</p>
+    <button id="btnResume">Weiterlaufen</button><button class="fsBtn touch-only">Vollbild</button>
+    <div class="quality" data-quality></div>
+    <div class="note desk-only">Weiter geht es auch mit <kbd>Enter</kbd>. <kbd>M</kbd> schaltet den Ton, <kbd>V</kbd> die Kamera.</div>
+    <div class="note touch-only"><a href="#" id="muteLink" style="color:inherit">Ton aus</a></div>
+  </div>
+</section>
+
+<section id="over" class="screen">
+  <div class="col">
+    <h1>Die Horde hat dich erwischt</h1>
+    <dl class="stats">
+      <dt>Score</dt><dd id="oScore">0</dd>
+      <dt>Welle</dt><dd id="oWave">1</dd>
+      <dt>Kills</dt><dd id="oKills">0</dd>
+      <dt>Bestwert</dt><dd id="oBest">0</dd>
+    </dl>
+    <div class="note" id="newBest">Neuer Bestwert.</div>
+    <button id="btnRestart">Neuer Lauf</button>
+    <div class="note desk-only">Oder <kbd>Enter</kbd> oder <kbd>R</kbd> drücken.</div>
+  </div>
+</section>
+
+<!-- Touch-Steuerung: linker Stick, Wischen rechts, Knöpfe. Positionen setzt layoutTouch() aus den Werten in Abschnitt 1. -->
+<div id="touch" aria-hidden="true">
+  <div id="stickHint"></div>
+  <div id="stickBase"></div><div id="stickKnob"></div>
+  <div class="tbtn big" data-btn="hit">Schlag</div>
+  <div class="tbtn" data-btn="throw">Wurf</div>
+  <div class="tbtn" data-btn="jump">Sprung</div>
+  <div class="tbtn" data-btn="ram">Ramm</div>
+  <div class="tbtn small" data-btn="cam">Kam</div>
+  <div class="tbtn small" data-btn="pause">II</div>
+</div>
+
+<div id="rotate"><div class="phone"></div><b>Bitte quer halten</b><span>Der Krampuslauf läuft nur im Querformat.</span></div>
+
+<script>
+  // Falls das Spiel nicht startet, nach ein paar Sekunden einen Hinweis zeigen.
+  setTimeout(function () {
+    if (!window.__krampusReady) { var e = document.getElementById('loadError'); if (e) e.style.display = 'block'; }
+  }, 9000);
+</script>
+</body>
+</html>
