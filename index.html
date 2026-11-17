@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Krampuslauf – Schloss Marzoll</title>
+<!-- Als App installierbar (Manifest, Symbole, Service Worker in public/) -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0c090a">
+<meta name="description" content="Verteidige Schloss Marzoll gegen die Krampus-Horde. Wie weit kommst du?">
+<link rel="icon" type="image/png" href="./icons/favicon-64.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Krampuslauf">
 <!-- Schriften: Fraktur wie im Schlosslauf-Trailer, dazu eine schmale Grotesk fürs HUD.
      Ohne Internet greifen die System-Schriften aus der font-family-Liste. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -244,9 +254,14 @@
   body[data-touch="1"] .quality { margin-top: .8rem; }
   body[data-touch="1"] .screen p { margin-top: .7rem; }
   body[data-touch="1"] .screen button { margin-top: 1rem; }
+  .screen .installBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
+  .screen .installBtn[hidden] { display: none; }
+  #installHint:empty { display: none; }
+  #installHint { color: var(--messing); }
+  body[data-app="1"] .fsBtn { display: none !important; }        /* als App läuft das Spiel ohnehin im Vollbild */
   .screen .fsBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
 </style>
-  <script type="module" crossorigin src="./assets/index-CylptgdF.js"></script>
+  <script type="module" crossorigin src="./assets/index-CDBgQyvu.js"></script>
 </head>
 <body data-state="loading">
 <canvas id="game"></canvas>
@@ -306,7 +321,8 @@
       <dt><kbd>M</kbd></dt><dd>Ton an oder aus</dd>
       <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
     </dl>
-    <button id="btnStart" disabled>Schloss wird aufgebaut</button><button class="fsBtn touch-only">Vollbild</button>
+    <button id="btnStart" disabled>Schloss wird aufgebaut</button><button class="fsBtn touch-only">Vollbild</button><button id="btnInstall" class="installBtn" hidden>Als App installieren</button>
+    <div class="note" id="installHint"></div>
     <div class="quality" data-quality></div>
     <div class="note" id="menuBest"></div>
     <div id="loadError">Das Spiel konnte nicht starten. Bitte die Seite neu laden; hilft das nicht, einen aktuellen Browser verwenden.</div>
