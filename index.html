@@ -143,14 +143,6 @@
   #over h1, #pause h1 { font-size: clamp(3rem, 7vw, 5.6rem); line-height: .92; }
   #newBest { color: var(--glut); display: none; }
   #loadError { display: none; margin-top: 1rem; color: var(--glut); font-size: 1.1rem; max-width: 26rem; }
-  /* Krampus-Galerie (Taste G im Menü) */
-  #gallery { position: fixed; left: 0; right: 0; bottom: 4vh; display: none; text-align: center; pointer-events: none; }
-  body[data-state="menu"][data-gallery="1"] #gallery { display: block; }
-  body[data-state="menu"][data-gallery="1"] #menu { display: none; }
-  #gallery .names { display: flex; justify-content: center; gap: 0; }
-  #gallery .names span { min-width: 22vw; font-family: var(--fraktur); font-size: 2rem; line-height: 1; color: var(--larve); text-shadow: 0 2px 0 #000, 0 0 16px #000; }
-  #gallery .names small { display: block; margin-top: .25rem; font: 600 1.1rem var(--grotesk); color: var(--messing); }
-  #gallery .note { margin-top: 1rem; font-size: 1.05rem; font-weight: 600; color: var(--schnee); text-shadow: 0 1px 0 #000, 0 0 10px #000; }
 
   /* ---------- Name und Bestenliste ---------- */
   .name { display: block; margin-top: 1.3rem; font-size: 1.05rem; font-weight: 600; color: var(--schnee); }
@@ -177,6 +169,8 @@
   #overSub:empty, #overRank:empty { display: none; }
   #overRank { color: var(--messing); font-weight: 600; }
   #hCombo { color: var(--glut); }
+  #hSegen { color: #ffd060; }
+  #threats i.ally { border-bottom-color: #ffd060; border-left-width: 9px; border-right-width: 9px; left: -9px; border-bottom-width: 15px; filter: drop-shadow(0 0 6px #ffd060); }
   #hCombo.bump { animation: bump .28s ease-out; }
   body[data-touch="1"] .board { width: min(17rem, 34vw); padding: .6rem .7rem; }
   body[data-touch="1"] .board h3 { font-size: 1.5rem; }
@@ -252,7 +246,7 @@
   body[data-touch="1"] .screen button { margin-top: 1rem; }
   .screen .fsBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
 </style>
-  <script type="module" crossorigin src="./assets/index-CxpLM0eW.js"></script>
+  <script type="module" crossorigin src="./assets/index-K55rBI7m.js"></script>
 </head>
 <body data-state="loading">
 <canvas id="game"></canvas>
@@ -262,7 +256,7 @@
   <div id="threats"></div>
   <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><em></em><b id="hitmarker"></b></div>
   <div id="hud-wave"><span class="big" id="hWave">Welle 1</span><span class="small" id="hLeft"></span></div>
-  <div id="hud-score"><span class="big" id="hScore">0</span><span class="small" id="hKills">0 Kills</span><span class="small" id="hCombo"></span></div>
+  <div id="hud-score"><span class="big" id="hScore">0</span><span class="small" id="hKills">0 Kills</span><span class="small" id="hCombo"></span><span class="small" id="hSegen"></span></div>
   <div id="hud-health"><div class="row"><span>Leben</span><span id="hHp">100</span></div><div class="bar"><div id="hHpFill"></div></div></div>
   <div id="hud-rute">
     <svg viewBox="0 0 64 64">
@@ -314,19 +308,11 @@
     </dl>
     <button id="btnStart" disabled>Schloss wird aufgebaut</button><button class="fsBtn touch-only">Vollbild</button>
     <div class="quality" data-quality></div>
-    <div class="note desk-only">Mit <kbd>G</kbd> siehst du alle Krampusse aus der Nähe.</div>
-    <div class="note touch-only"><a href="#" id="galleryLink" style="color:inherit">Alle Krampusse aus der Nähe ansehen</a></div>
     <div class="note" id="menuBest"></div>
     <div id="loadError">Das Spiel konnte nicht starten. Bitte die Seite neu laden; hilft das nicht, einen aktuellen Browser verwenden.</div>
   </div>
   <aside class="board" id="menuBoard"><h3>Bestenliste</h3><ol></ol><div class="bstatus"></div></aside>
 </section>
-
-<div id="gallery">
-  <div class="names"><span id="galleryName">Alle Krampusse<small>Schlossteufel und die Gegner</small></span></div>
-  <div class="note desk-only"><kbd>←</kbd> <kbd>→</kbd> blättert durch die Krampusse und die Rute, <kbd>0</kbd> zeigt alle. <kbd>G</kbd> oder <kbd>Esc</kbd> schließt die Galerie</div>
-  <div class="note touch-only">Tippen zeigt den nächsten Krampus aus der Nähe, nach dem letzten schließt die Galerie</div>
-</div>
 
 <section id="pause" class="screen">
   <div class="col">
