@@ -165,7 +165,10 @@
   .board { flex: 0 0 auto; width: min(21rem, 36vw); margin-left: auto; align-self: center; padding: 1rem 1.1rem .9rem;
     background: rgba(12,9,10,.82); border: 1px solid rgba(201,161,75,.45); }
   .board h3 { margin: 0 0 .5rem; font: 400 2rem/1 var(--fraktur); color: var(--messing); }
-  .board ol { margin: 0; padding: 0; list-style: none; }
+  .board ol { margin: 0; padding: 0 .35rem 0 0; list-style: none; max-height: min(22rem, 46vh); overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; touch-action: pan-y; scrollbar-width: thin; scrollbar-color: var(--messing) transparent; }   /* 50 Plätze: scrollen mit Maus oder Finger */
+  .board ol::-webkit-scrollbar { width: 5px; }
+  .board ol::-webkit-scrollbar-thumb { background: var(--messing); border-radius: 3px; }
   .board li { display: grid; grid-template-columns: 2.1rem 1fr auto auto; gap: .6rem; align-items: baseline; padding: .18rem 0;
     font-size: 1.1rem; font-weight: 600; color: var(--schnee); border-bottom: 1px solid rgba(195,207,221,.08); }
   .board li .r { color: var(--messing); text-align: right; }
@@ -180,11 +183,14 @@
   #overRank { color: var(--messing); font-weight: 600; }
   #hCombo { color: var(--glut); }
   #hSegen { color: #ffd060; }
+  #hBuff { color: #ff9a6a; }
+  .tbtn.flare { border-color: var(--bengalo); box-shadow: 0 0 16px rgba(227,23,59,.8); }
   #threats i.ally { border-bottom-color: #ffd060; border-left-width: 9px; border-right-width: 9px; left: -9px; border-bottom-width: 15px; filter: drop-shadow(0 0 6px #ffd060); }
   #hCombo.bump { animation: bump .28s ease-out; }
   body[data-touch="1"] .board { width: min(17rem, 34vw); padding: .6rem .7rem; }
   body[data-touch="1"] .board h3 { font-size: 1.5rem; }
   body[data-touch="1"] .board li { font-size: .95rem; padding: .08rem 0; }
+  body[data-touch="1"] .board ol { max-height: min(15rem, 52vh); }
   body[data-touch="1"] .name { margin-top: .7rem; }
   body[data-touch="1"] #touchKeys { display: none; }       /* am Handy: Steuerung steht auf den Knöpfen, Platz für Name und Liste */
 
@@ -257,11 +263,23 @@
   .screen .installBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
   .screen .installBtn[hidden] { display: none; }
   #installHint:empty { display: none; }
+  .screen .continueBtn { display: block; margin-top: .8rem; font-size: 1.5rem; background: rgba(12,9,10,.75); border: 1px solid var(--glut); box-shadow: 0 0 18px rgba(255,123,46,.35); }
+  .screen .continueBtn[hidden] { display: none; }
+  #overtake { position: fixed; right: calc(env(safe-area-inset-right) + 1.2rem); top: 1.2rem; z-index: 45; width: min(26rem, 88vw); padding: .9rem 1.2rem .9rem 3rem;
+    background: rgba(12,9,10,.94); border: 1px solid var(--messing); box-shadow: 0 0 30px rgba(227,23,59,.45); color: var(--larve); }
+  #overtake[hidden] { display: none; }
+  #overtake b { display: block; font: 400 1.9rem/1 var(--fraktur); color: var(--bengalo); }
+  #overtake p { margin: .35rem 0 0; font-size: 1.2rem; font-weight: 600; }
+  #overtake small { display: block; margin-top: .3rem; font-size: 1rem; color: var(--messing); }
+  #overtakeClose { position: absolute; left: .45rem; top: .35rem; width: 2.1rem; height: 2.1rem; padding: 0; font: 600 1.7rem/1 var(--grotesk);
+    color: var(--larve); background: transparent; border: 0; cursor: pointer; }
+  #overtakeClose:hover { color: #fff; }
+  body[data-state="playing"] #overtake { display: none; }
   #installHint { color: var(--messing); }
   body[data-app="1"] .fsBtn { display: none !important; }        /* als App läuft das Spiel ohnehin im Vollbild */
   .screen .fsBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
 </style>
-  <script type="module" crossorigin src="./assets/index-CAXWZQW2.js"></script>
+  <script type="module" crossorigin src="./assets/index-BC4-rJmV.js"></script>
 </head>
 <body data-state="loading">
 <canvas id="game"></canvas>
@@ -271,7 +289,7 @@
   <div id="threats"></div>
   <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><em></em><b id="hitmarker"></b></div>
   <div id="hud-wave"><span class="big" id="hWave">Welle 1</span><span class="small" id="hLeft"></span></div>
-  <div id="hud-score"><span class="big" id="hScore">0</span><span class="small" id="hKills">0 Kills</span><span class="small" id="hCombo"></span><span class="small" id="hSegen"></span></div>
+  <div id="hud-score"><span class="big" id="hScore">0</span><span class="small" id="hKills">0 Kills</span><span class="small" id="hCombo"></span><span class="small" id="hSegen"></span><span class="small" id="hBuff"></span></div>
   <div id="hud-health"><div class="row"><span>Leben</span><span id="hHp">100</span></div><div class="bar"><div id="hHpFill"></div></div></div>
   <div id="hud-rute">
     <svg viewBox="0 0 64 64">
@@ -322,6 +340,7 @@
       <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
     </dl>
     <button id="btnStart" disabled>Schloss wird aufgebaut</button><button class="fsBtn touch-only">Vollbild</button><button id="btnInstall" class="installBtn" hidden>Als App installieren</button>
+    <button id="btnContinue" class="continueBtn" hidden>Lauf fortsetzen</button>
     <div class="note" id="installHint"></div>
     <div class="quality" data-quality></div>
     <div class="note" id="menuBest"></div>
@@ -370,6 +389,14 @@
   <div class="tbtn" data-btn="ram">Ramm</div>
   <div class="tbtn small" data-btn="cam">Kam</div>
   <div class="tbtn small" data-btn="pause">II</div>
+</div>
+
+<!-- „Name hat dich überholt“ (src/ueberholt.js) -->
+<div id="overtake" role="dialog" aria-live="polite" hidden>
+  <button id="overtakeClose" aria-label="Schließen">×</button>
+  <b>Überholt!</b>
+  <p id="overtakeText"></p>
+  <small id="overtakeSub"></small>
 </div>
 
 <div id="rotate"><div class="phone"></div><b>Bitte quer halten</b><span>Der Krampuslauf läuft nur im Querformat.</span></div>
