@@ -1,9 +1,10 @@
 // Service Worker: macht das Spiel installierbar, startet es schnell und offline.
-//   Seite (index.html): erst Netz, sonst Zwischenspeicher  -> neue Versionen kommen beim nächsten Start
+//   Seite (index.html): erst Netz (immer frisch beim Server nachgefragt, nicht aus dem Browser-Cache),
+//                       sonst Zwischenspeicher -> neue Versionen kommen beim nächsten Start
 //   Spieldateien (assets/, icons/ ...): erst Zwischenspeicher -> Dateinamen ändern sich mit jeder Version
 //   Schriften von Google: einmal laden, dann aus dem Zwischenspeicher
 //   Bestenliste (Server-Funktion) und alles andere: immer übers Netz, nie zwischengespeichert
-const CACHE = 'krampuslauf-v1';
+const CACHE = 'krampuslauf-v2';
 const CORE = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 const ASSET_IN_HTML = /assets\/[^"')\s]+/g;
 const ASSET_IN_JS = /["'`/(]([A-Za-z0-9_.-]+-[A-Za-z0-9_-]{8}\.(?:js|css|mp3|glb|png|jpg))/g;   // von Vite erzeugte Dateinamen (mit Prüfsumme)
@@ -48,7 +49,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
     if (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
-      e.respondWith(fetch(req).then((res) => {
+      e.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then((res) => {   // GitHub Pages: sonst bis zu 10 min alte Seite
         if (res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put('./', copy.clone()));
