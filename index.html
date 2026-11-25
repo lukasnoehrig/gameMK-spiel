@@ -126,16 +126,16 @@
   #toast.show { opacity: 1; }
 
   /* ---------- Bildschirme ---------- */
-  .screen { position: fixed; inset: 0; display: none; align-items: center; padding: 3vh 6vw; overflow-y: auto;
+  .screen { position: fixed; inset: 0; display: none; align-items: flex-start; padding: 3vh 6vw; overflow-y: auto;
     background: linear-gradient(90deg, rgba(12,9,10,.93) 0%, rgba(12,9,10,.78) 34%, rgba(12,9,10,0) 72%); }
   body[data-state="loading"] #menu, body[data-state="menu"] #menu,
   body[data-state="paused"] #pause, body[data-state="gameover"] #over { display: flex; }
-  .screen .col { max-width: 31rem; }
+  .screen .col { max-width: 31rem; margin: auto 0; }                    /* mittig, oben nie abgeschnitten (Menü ist lang) */
   .screen h1 { margin: 0; font-family: var(--fraktur); font-weight: 400; font-size: clamp(4rem, 10.5vw, 9rem); line-height: .86;
     color: var(--larve); text-shadow: 0 0 60px rgba(227,23,59,.85), 0 0 12px rgba(227,23,59,.5), 0 4px 0 #000; }
   .screen h2 { margin: .5rem 0 0; font-family: var(--fraktur); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 3rem); line-height: 1; color: var(--messing); }
   .screen p { margin: 1.3rem 0 0; font-size: 1.3rem; line-height: 1.3; font-weight: 500; color: var(--schnee); max-width: 26rem; }
-  .keys { margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: auto 1fr; gap: .42rem 1rem; align-items: center; font-size: 1.15rem; }
+  .keys { margin: 1.1rem 0 0; padding: 0; display: grid; grid-template-columns: auto 1fr; gap: .34rem 1rem; align-items: center; font-size: 1.15rem; }
   .keys dt { margin: 0; white-space: nowrap; }
   .keys dd { margin: 0; color: var(--schnee); font-weight: 500; }
   kbd { display: inline-block; min-width: 1.75rem; padding: .05rem .45rem; margin-right: .15rem; text-align: center; font: 600 1rem var(--grotesk);
@@ -278,8 +278,55 @@
   #installHint { color: var(--messing); }
   body[data-app="1"] .fsBtn { display: none !important; }        /* als App läuft das Spiel ohnehin im Vollbild */
   .screen .fsBtn { margin-left: .6rem; background: rgba(12,9,10,.7); border: 1px solid var(--messing); box-shadow: none; font-size: 1.6rem; }
+  /* ---------- Shop (eigener Krampus, alles frei auswählbar) ---------- */
+  .sidecol { flex: 0 0 auto; width: min(21rem, 36vw); margin: auto 0 auto auto; display: flex; flex-direction: column; gap: .7rem; }
+  .sidecol .board { width: auto; margin-left: 0; align-self: stretch; }                      /* Bestenliste unverändert, nur in der rechten Spalte */
+  body[data-touch="1"] .sidecol { width: min(17rem, 34vw); gap: .4rem; }
+  .screen .shopBtn { margin: 0; align-self: stretch; padding: .5rem 1rem .55rem; font: 400 1.7rem/1 var(--fraktur); color: var(--larve);
+    background: rgba(12,9,10,.82); border: 1px solid var(--messing); box-shadow: none; }
+  .screen .shopBtn:hover { background: rgba(201,161,75,.22); }
+  body[data-touch="1"] .screen .shopBtn { font-size: 1.3rem; padding: .3rem .8rem .35rem; }
+  .screen .sideBtn { margin: 0 0 0 .6rem; vertical-align: bottom; padding: .55rem 1rem; font: 600 1.25rem/1 var(--grotesk); color: var(--larve);
+    background: rgba(12,9,10,.72); border: 1px solid rgba(201,161,75,.55); box-shadow: none; }
+  .screen .sideBtn:hover { background: rgba(201,161,75,.22); }
+
+  #werkstatt { position: fixed; inset: 0; display: none; }
+  body[data-state="werkstatt"] #werkstatt { display: block; }
+  #werkStage { position: absolute; inset: 0; cursor: grab; touch-action: none; }
+  #werkStage:active { cursor: grabbing; }
+  .whelp { position: absolute; left: 1.2rem; bottom: 1rem; font-size: 1rem; font-weight: 600; color: var(--schnee); opacity: .7; text-shadow: 0 1px 0 #000; }
+  #werkPanel { position: absolute; right: 0; top: 0; bottom: 0; width: min(34rem, 50vw); display: flex; flex-direction: column; gap: .6rem;
+    padding: 1.1rem 1.2rem 1rem; padding-right: calc(env(safe-area-inset-right) + 1.2rem);
+    background: linear-gradient(90deg, rgba(12,9,10,.55), rgba(12,9,10,.94) 12%); border-left: 1px solid rgba(201,161,75,.35); }
+  .whead { display: flex; align-items: center; gap: 1rem; }
+  .whead h2 { margin: 0; font: 400 2.3rem/1 var(--fraktur); color: var(--messing); }
+  #werkstatt button { font-family: var(--grotesk); cursor: pointer; }
+  .wclose { margin-left: auto; padding: .4rem 1rem; font: 400 1.5rem/1 var(--fraktur) !important; color: #fff; background: var(--bengalo); border: 0; border-radius: 2px; box-shadow: 0 3px 0 #7a0a1e; }
+  .wcats { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .wcats button { padding: .3rem .7rem .34rem; font-size: 1.05rem; font-weight: 600; color: var(--larve); background: rgba(12,9,10,.7); border: 1px solid rgba(201,161,75,.4); border-radius: 2px; }
+  .wcats button[aria-pressed="true"] { background: var(--messing); color: var(--russ); border-color: var(--messing); }
+  .wcount { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .4rem; margin-bottom: .6rem; }
+  .wcount .wbell { width: 1.3rem; height: 1.3rem; }
+  .wcount button { min-width: 2.4rem; padding: .25rem .5rem; font-size: 1.1rem; font-weight: 700; color: var(--larve); background: rgba(12,9,10,.7); border: 1px solid rgba(201,161,75,.45); border-radius: 2px; }
+  .wcount button[aria-pressed="true"] { background: var(--messing); color: var(--russ); border-color: var(--messing); }
+  .wlist { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-right: .3rem;
+    scrollbar-width: thin; scrollbar-color: var(--messing) transparent; }
+  .wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr)); gap: .45rem; }
+  .wcard { aspect-ratio: 1; display: grid; place-items: center; padding: .3rem; background: rgba(30,24,22,.85); border: 1px solid rgba(195,207,221,.16); border-radius: 4px; }
+  .wcard svg { width: 100%; height: 100%; display: block; }
+  .wcard:hover { border-color: rgba(201,161,75,.6); }
+  .wcard.equipped { border-color: var(--glut); box-shadow: inset 0 0 0 2px var(--glut); background: rgba(255,123,46,.14); }
+  body[data-touch="1"] #werkPanel { width: 56vw; padding: .5rem .7rem .5rem; padding-right: calc(env(safe-area-inset-right) + .7rem); gap: .4rem; }
+  body[data-touch="1"] .whead h2 { font-size: 1.6rem; }
+  body[data-touch="1"] .wgrid { grid-template-columns: repeat(auto-fill, minmax(4.2rem, 1fr)); gap: .35rem; }
+  body[data-touch="1"] .whelp { left: calc(env(safe-area-inset-left) + 1rem); }
+  body[data-touch="1"] .stats dd { font-size: 1.6rem; }
+  @media (max-aspect-ratio: 1/1) {
+    #werkPanel { left: 0; right: 0; top: auto; width: auto; height: 50vh; border-left: 0; border-top: 1px solid rgba(201,161,75,.35);
+      background: linear-gradient(180deg, rgba(12,9,10,.6), rgba(12,9,10,.95) 10%); }
+  }
 </style>
-  <script type="module" crossorigin src="./assets/index-BC4-rJmV.js"></script>
+  <script type="module" crossorigin src="./assets/index-CrZ5siu5.js"></script>
 </head>
 <body data-state="loading">
 <canvas id="game"></canvas>
@@ -307,7 +354,7 @@
     </svg>
     <div><span class="small">Rammsprint <kbd class="desk-only">F</kbd></span><span id="hRam">0 %</span></div>
   </div>
-  <div id="bossbar"><div class="name">Oberteufel</div><div class="bar"><div id="hBossFill"></div></div></div>
+  <div id="bossbar"><div class="name" id="hBossName">Oberteufel</div><div class="bar"><div id="hBossFill"></div></div></div>
   <div id="banner"><div id="bannerTitle"></div><div id="bannerSub"></div></div>
   <div id="toast"></div>
 </div>
@@ -346,7 +393,10 @@
     <div class="note" id="menuBest"></div>
     <div id="loadError">Das Spiel konnte nicht starten. Bitte die Seite neu laden; hilft das nicht, einen aktuellen Browser verwenden.</div>
   </div>
-  <aside class="board" id="menuBoard"><h3>Bestenliste</h3><ol></ol><div class="bstatus"></div></aside>
+  <div class="sidecol">
+    <button class="shopBtn" data-werk>Shop</button>
+    <aside class="board" id="menuBoard"><h3>Bestenliste</h3><ol></ol><div class="bstatus"></div></aside>
+  </div>
 </section>
 
 <section id="pause" class="screen">
@@ -373,10 +423,23 @@
     </dl>
     <div class="note" id="newBest">Neuer Bestwert.</div>
     <div class="note" id="overRank"></div>
-    <button id="btnRestart">Neuer Lauf</button>
+    <button id="btnRestart">Neuer Lauf</button><button id="btnOverWerk" class="sideBtn">Shop</button><button id="btnOverMenu" class="sideBtn">Menü</button>
     <div class="note desk-only">Oder <kbd>Enter</kbd> oder <kbd>R</kbd> drücken.</div>
   </div>
   <aside class="board" id="overBoard"><h3>Bestenliste</h3><ol></ol><div class="bstatus"></div></aside>
+</section>
+
+<!-- Shop: eigener Krampus, alles frei auswählbar (src/werkstatt.js) -->
+<section id="werkstatt" aria-label="Shop">
+  <div id="werkStage"><span class="whelp">Ziehen zum Drehen</span></div>
+  <div id="werkPanel">
+    <header class="whead">
+      <h2>Shop</h2>
+      <button id="werkClose" class="wclose">Zurück</button>
+    </header>
+    <nav id="werkCats" class="wcats"></nav>
+    <div id="werkList" class="wlist"></div>
+  </div>
 </section>
 
 <!-- Touch-Steuerung: linker Stick, Wischen rechts, Knöpfe. Positionen setzt layoutTouch() aus den Werten in Abschnitt 1. -->
